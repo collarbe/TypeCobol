@@ -127,7 +127,7 @@ namespace TypeCobol.Compiler.Diagnostics {
 			var global    = GetContext(data, context.globalClause());
 			if (data.DataName == null) {
 				if (!data.IsFiller)
-					DiagnosticUtils.AddError(data, "Data name or FILLER expected", context.dataNameDefinition());
+					DiagnosticUtils.AddError(data, "Data name or FILLER expected", context.dataNameDef as Token);
 				if (data.IsExternal)
 					DiagnosticUtils.AddError(data, "Data name must be specified for any entry containing the EXTERNAL clause", external);
 				if (data.IsGlobal)
@@ -165,9 +165,9 @@ namespace TypeCobol.Compiler.Diagnostics {
             }
             var context = c as CodeElementsParser.DataConditionEntryContext;
 			if (data.LevelNumber.Value != 88)
-				DiagnosticUtils.AddError(data, "Data conditions must be level 88", context.levelNumber);
+				DiagnosticUtils.AddError(data, "Data conditions must be level 88", context.levelNumber as Token);
 			if (data.DataName == null)
-				DiagnosticUtils.AddError(data, "Data name must be specified for level-88 items", context.levelNumber);
+				DiagnosticUtils.AddError(data, "Data name must be specified for level-88 items", context.levelNumber as Token);
 		}
 	}
 
@@ -181,10 +181,10 @@ namespace TypeCobol.Compiler.Diagnostics {
             var context = c as CodeElementsParser.DataConditionEntryContext;
 			if (data.LevelNumber.Value != 66)
 				//(source page 379 of ISO Cobol 2014)
-				DiagnosticUtils.AddError(data, "RENAMES must be level 66", context.levelNumber);
+				DiagnosticUtils.AddError(data, "RENAMES must be level 66", context.levelNumber as Token);
 			if (data.DataName == null)
 				//(source page 379 of ISO Cobol 2014)
-				DiagnosticUtils.AddError(data, "Data name must be specified for level-66 items", context.levelNumber);
+				DiagnosticUtils.AddError(data, "Data name must be specified for level-66 items", context.levelNumber as Token);
 			if (data.RenamesFromDataName.Equals(data.RenamesToDataName))
 				//(source page 379 of ISO Cobol 2014)
 				DiagnosticUtils.AddError(data, "Renamed items can't be the same " + data.RenamesFromDataName + " and " + data.RenamesToDataName, context);
@@ -340,8 +340,8 @@ namespace TypeCobol.Compiler.Diagnostics {
 	}
 	private static RuleContext GetIdentifierContext(ParserRuleContext context) {
 		var c = (CodeElementsParser.SearchStatementContext)context;
-		if (c.serialSearch() != null) return c.serialSearch().variable1().identifier();
-		if (c.binarySearch() != null) return c.binarySearch().variable1().identifier();
+		if (c.serialSearch() != null) return c.serialSearch().identifier();
+		if (c.binarySearch() != null) return c.binarySearch().identifier();
 		return null;
 	}
 }

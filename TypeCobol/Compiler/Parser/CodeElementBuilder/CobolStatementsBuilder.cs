@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime.Tree;
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using TypeCobol.Compiler.AntlrUtils;
 using TypeCobol.Compiler.CodeElements;
 using TypeCobol.Compiler.Parser.Generated;
@@ -388,7 +389,7 @@ namespace TypeCobol.Compiler.Parser
 		internal CodeElement CreateExecStatement(CodeElementsParser.ExecStatementContext context) {
 			var statement = new ExecStatement();
 			statement.ExecTranslatorName = CobolWordsBuilder.CreateExecTranslatorName(context.execTranslatorName());
-			statement.CodeLines = BuildObjectArrayFromParserRules(context.alphanumericValue8(), ctx => CobolWordsBuilder.CreateAlphanumericValue(ctx));
+			statement.CodeLines = BuildObjectArrayFromParserRules(context.ExecStatementText(), ctx => CobolWordsBuilder.CreateAlphanumericValue(ctx));
 			return statement;
 		}
 
@@ -405,7 +406,7 @@ namespace TypeCobol.Compiler.Parser
 		internal CodeElement CreateGotoConditionalStatement(CodeElementsParser.GotoConditionalContext context) {
 			var statement = new GotoConditionalStatement();
 			statement.ProcedureNames = BuildObjectArrayFromParserRules(context.procedureName(), ctx => CobolWordsBuilder.CreateProcedureName(ctx));
-			statement.DependingOn = CobolExpressionsBuilder.CreateVariable(context.variable1());
+			statement.DependingOn = CobolExpressionsBuilder.CreateVariable(context.identifier());
 			if (statement.ProcedureNames.Length > 1 && statement.DependingOn == null)
 				DiagnosticUtils.AddError(statement, "GO TO: Required only one <procedure name> or DEPENDING phrase", context);
 			if (statement.ProcedureNames.Length < 1 && statement.DependingOn != null)
@@ -508,7 +509,7 @@ namespace TypeCobol.Compiler.Parser
 				statement.ReplacingConditions = BuildObjectArrayFromParserRules(context.convertingPhrase().countingOrReplacingCondition(), ctx => CreateCountingOrReplacingCondition(ctx));
 				return statement;
 			} else {
-				InspectTallyingStatement statement = null;
+				InspectTallyingStatement statement;
 				if(context.replacingPhrase() != null)
 				{
 					statement = new InspectReplacingStatement();
@@ -832,7 +833,8 @@ namespace TypeCobol.Compiler.Parser
 			return statement;
 		}
 
-		private void CreateFileInstructions(IList<OpenFileInstruction> openFileInstructions, CodeElementsParser.FileNameReferenceContext[] fileNameReferenceContexts, SyntaxProperty<OpenMode> openMode) {
+		private void CreateFileInstructions(IList<OpenFileInstruction> openFileInstructions,
+		    [NotNull] CodeElementsParser.FileNameReferenceContext[] fileNameReferenceContexts, SyntaxProperty<OpenMode> openMode) {
 			foreach (var fileNameReferenceCtx in fileNameReferenceContexts) {
 				var openFileInstruction = new OpenFileInstruction();
 				openFileInstruction.OpenMode = openMode;
@@ -841,7 +843,8 @@ namespace TypeCobol.Compiler.Parser
 			}
 		}
 
-		private void CreateFileInstructions(IList<OpenFileInstruction> openFileInstructions, CodeElementsParser.FileNameWithNoRewindOrReversedContext[] fileWithPropsContexts, SyntaxProperty<OpenMode> openMode) {
+		private void CreateFileInstructions(IList<OpenFileInstruction> openFileInstructions,
+		    [NotNull] CodeElementsParser.FileNameWithNoRewindOrReversedContext[] fileWithPropsContexts, SyntaxProperty<OpenMode> openMode) {
 			foreach (var fileWithPropsCtx in fileWithPropsContexts) {
 				var openFileInstruction = new OpenFileInstruction();
 				openFileInstruction.OpenMode = openMode;
@@ -974,7 +977,7 @@ namespace TypeCobol.Compiler.Parser
 			// !! TODO !! RecordName should be of type ReceivingStorageArea, because
 			// it can be the target of a MOVE when FROM is used
 			statement.RecordName = CobolWordsBuilder.CreateRecordName(context.recordName());
-			statement.FromVariable = CobolExpressionsBuilder.CreateVariable(context.variable1());
+			statement.FromVariable = CobolExpressionsBuilder.CreateVariable(context.identifier());
 			return statement;
 		}
 		
@@ -1008,7 +1011,7 @@ namespace TypeCobol.Compiler.Parser
 
 		internal CodeElement CreateSerialSearchStatement(CodeElementsParser.SerialSearchContext context) {
 			var statement = new SearchSerialStatement();
-			statement.TableToSearch = CobolExpressionsBuilder.CreateVariable(context.variable1());
+			statement.TableToSearch = CobolExpressionsBuilder.CreateVariable(context.identifier());
 			if(context.dataOrIndexStorageArea() != null) {
 				statement.VaryingSearchIndex = CobolExpressionsBuilder.CreateDataOrIndexStorageArea(context.dataOrIndexStorageArea());
 			}
@@ -1017,7 +1020,7 @@ namespace TypeCobol.Compiler.Parser
 
 		internal CodeElement CreateBinarySearchStatement(CodeElementsParser.BinarySearchContext context) {
 			var statement = new SearchBinaryStatement();
-			statement.TableToSearch = CobolExpressionsBuilder.CreateVariable(context.variable1());
+			statement.TableToSearch = CobolExpressionsBuilder.CreateVariable(context.identifier());
 			return statement;
 		}
 
@@ -1166,7 +1169,7 @@ namespace TypeCobol.Compiler.Parser
             if (context.relationalOperator() != null)
             {
                 statement.RelationalOperator = CobolExpressionsBuilder.CreateRelationalOperator(context.relationalOperator());
-                statement.KeyValue = CobolExpressionsBuilder.CreateVariable(context.variable1());
+                statement.KeyValue = CobolExpressionsBuilder.CreateVariable(context.identifier());
             }
 
             return statement;
@@ -1288,7 +1291,7 @@ namespace TypeCobol.Compiler.Parser
 		internal CodeElement CreateUnstringStatement(CodeElementsParser.UnstringStatementContext context)
         {
 			var statement = new UnstringStatement();
-			statement.SendingField = CobolExpressionsBuilder.CreateVariable(context.variable1());
+			statement.SendingField = CobolExpressionsBuilder.CreateVariable(context.identifier());
             if (context.unstringDelimiter() != null)
             {
                 statement.Delimiters = BuildObjectArrayFromParserRules(context.unstringDelimiter(), ctx => CreateUnstringDelimiter(ctx));
@@ -1577,9 +1580,9 @@ namespace TypeCobol.Compiler.Parser
             return objectList.ToArray();
         }
 
-        private O[] BuildObjectArrayFromParserRules<R, O>(R[] parserRules, Func<R, O> createObject) {
+        private O[] BuildObjectArrayFromParserRules<R, O>([NotNull] R[] parserRules, Func<R, O> createObject) {
 			O[] objectArray = new O[parserRules.Length];
-			if (parserRules != null && parserRules.Length > 0) {
+			if (parserRules.Length > 0) {
 				for (int i = 0; i < parserRules.Length; i++) {
 					objectArray[i] = createObject(parserRules[i]);
 				}

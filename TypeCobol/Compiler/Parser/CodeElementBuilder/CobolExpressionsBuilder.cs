@@ -153,7 +153,7 @@ namespace TypeCobol.Compiler.Parser
 			return storageArea;
 		}
 
-		internal SubscriptExpression[] CreateSubscriptExpressions(CodeElementsParser.SubscriptContext[] contextArray)
+		internal SubscriptExpression[] CreateSubscriptExpressions([NotNull] CodeElementsParser.SubscriptContext[] contextArray)
 		{
 			SubscriptExpression[] subscriptExpressions = new SubscriptExpression[contextArray.Length];
 			for(int i = 0; i < contextArray.Length; i++)
@@ -253,14 +253,13 @@ namespace TypeCobol.Compiler.Parser
 		// - 3. Function calls (allocate a storage area for the result) -
 
 		internal StorageArea CreateFunctionIdentifier(CodeElementsParser.FunctionIdentifierContext context) {
-			FunctionCallResult result = null;
+			FunctionCallResult result;
 			if (context.intrinsicFunctionCall() != null) {
 				result = new FunctionCallResult(CreateIntrinsicFunctionCall(context.intrinsicFunctionCall()));
 			} else { // [TYPECOBOL] user defined function calls
 				result = new FunctionCallResult(CreateUserDefinedFunctionCall(context.userDefinedFunctionCall()));
 			}
 			if (result.DataDescriptionEntry != null) {
-				var dataDescription = result.DataDescriptionEntry;
 				CobolWordsBuilder.symbolInformationForTokens[result.DataDescriptionEntry.DataName.NameLiteral.Token] = result.DataDescriptionEntry.DataName;
 			}
 			if (result.SymbolReference != null) {
@@ -277,7 +276,7 @@ namespace TypeCobol.Compiler.Parser
 		}
 
 		internal FunctionCall CreateIntrinsicFunctionCall(CodeElementsParser.IntrinsicFunctionCallContext context) {
-			var name = CobolWordsBuilder.CreateIntrinsicFunctionName(context.intrinsicFunctionName());
+			var name = CobolWordsBuilder.CreateIntrinsicFunctionName(context.IntrinsicFunctionName());
 			return new IntrinsicFunctionCall(name, CreateArguments(context.argument()));
 		}
 
@@ -314,8 +313,8 @@ namespace TypeCobol.Compiler.Parser
 		[CanBeNull]
 		internal StorageArea CreateOtherStorageAreaReference([CanBeNull]CodeElementsParser.OtherStorageAreaReferenceContext context) {
 			if (context == null) return null;
-			if (context.intrinsicDataNameReference() != null) {
-                SymbolReference specialRegisterName = CobolWordsBuilder.CreateInstrinsicDataNameReference(context.intrinsicDataNameReference());
+			if (context.specialRegister() != null) {
+                SymbolReference specialRegisterName = CobolWordsBuilder.CreateInstrinsicDataNameReference(context.specialRegister());
 				StorageArea specialRegister = new IntrinsicStorageArea(specialRegisterName);
 				return specialRegister;
 			}
@@ -405,8 +404,17 @@ namespace TypeCobol.Compiler.Parser
 		}
 
         [CanBeNull]
-		internal StorageArea CreateIdentifier(CodeElementsParser.IdentifierContext context) {
-			if (context == null) return null;
+		internal StorageArea CreateDataIdentifier([NotNull] CodeElementsParser.DataIdentifierContext context) {
+			StorageArea storageArea = CreateStorageAreaReference(context.storageAreaReference());
+			if(storageArea != null && context.referenceModifier() != null)
+			{
+				storageArea.ApplyReferenceModifier(CreateReferenceModifier(context.referenceModifier()));
+			}
+			return storageArea;
+		}
+
+        [CanBeNull]
+		internal StorageArea CreateIdentifier([NotNull] CodeElementsParser.IdentifierContext context) {
 			StorageArea storageArea = CreateStorageAreaReferenceOrConditionReference(context.storageAreaReferenceOrConditionReference());
 			if(storageArea != null && context.referenceModifier() != null)
 			{
@@ -785,11 +793,7 @@ namespace TypeCobol.Compiler.Parser
 		{
 			if(context.strictRelation() != null)
 			{
-				bool invertStrictRelation = false;
-				if (context.NOT() != null)
-				{
-					invertStrictRelation = true;
-				}
+				bool invertStrictRelation = context.NOT() != null;
 
 				CodeElementsParser.StrictRelationContext strictContext = context.strictRelation();
 				if(strictContext.GREATER() != null)
@@ -1007,25 +1011,11 @@ namespace TypeCobol.Compiler.Parser
             return variable;
 		}
 
-		internal NumericVariable CreateNumericVariable(CodeElementsParser.NumericVariable1Context context)
-		{
-			var variable = new NumericVariable(
-				CreateIdentifier(context.identifier()));
-
-            // Collect storage area read/writes at the code element level
-            if (variable.StorageArea != null)
-            {
-                this.storageAreaReads.Add(variable.StorageArea);
-            }
-
-            return variable;
-        }
-
-		internal NumericVariable CreateNumericVariable(CodeElementsParser.NumericVariable2Context context)
+		internal NumericVariable CreateNumericVariable(CodeElementsParser.DataNameReferenceContext context)
 		{
 			var variable = new NumericVariable(
 					new DataOrConditionStorageArea(
-						CobolWordsBuilder.CreateDataNameReference(context.dataNameReference())));
+						CobolWordsBuilder.CreateDataNameReference(context)));
 
             // Collect storage area read/writes at the code element level
             if (variable.StorageArea != null)
@@ -1130,8 +1120,8 @@ namespace TypeCobol.Compiler.Parser
 				variable = new AlphanumericVariable(
 					CreateIdentifier(context.identifier()));
 			} else {
-				if (context.alphanumericValue2() != null) {
-					variable = new AlphanumericVariable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+				if (context.alphanumericOrNationalLiteralToken() != null) {
+					variable = new AlphanumericVariable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 				} else {
 					variable = new AlphanumericVariable(CobolWordsBuilder.CreateRepeatedCharacterValue(context.repeatedCharacterValue1()));
 				}
@@ -1269,9 +1259,9 @@ namespace TypeCobol.Compiler.Parser
             return variable;
         }
 
-		internal Variable CreateVariable(CodeElementsParser.Variable1Context context) {
+		internal Variable CreateVariable(CodeElementsParser.IdentifierContext context) {
 			if (context == null) return null;
-			StorageArea storageArea = CreateIdentifier(context.identifier());
+			StorageArea storageArea = CreateIdentifier(context);
 			var variable = new Variable(storageArea);
 
             // Collect storage area read/writes at the code element level
@@ -1279,17 +1269,6 @@ namespace TypeCobol.Compiler.Parser
 
             return variable;
         }
-
-		internal Variable CreateVariable(CodeElementsParser.Variable2Context context)
-		{
-			SymbolReference qualifiedDataName = CobolWordsBuilder.CreateQualifiedDataName(context.qualifiedDataName());
-			StorageArea storageArea = new DataOrConditionStorageArea(qualifiedDataName);
-
-            // Collect storage area read/writes at the code element level
-            this.storageAreaReads.Add(storageArea);
-
-            return new Variable(storageArea);
-		}
 
         [CanBeNull]
         internal Variable CreateVariable([NotNull] CodeElementsParser.Variable4Context context)
@@ -1364,8 +1343,8 @@ namespace TypeCobol.Compiler.Parser
 			if (context.numericValue() != null) {
 				variable = new Variable(CobolWordsBuilder.CreateNumericValue(context.numericValue()));
 			} else
-			if(context.alphanumericValue2() != null) {
-				variable = new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+			if(context.alphanumericOrNationalLiteralToken() != null) {
+				variable = new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 			} else {
 				variable = new Variable(CobolWordsBuilder.CreateRepeatedCharacterValue(context.repeatedCharacterValue1()));
 			}
@@ -1379,17 +1358,18 @@ namespace TypeCobol.Compiler.Parser
             return variable;
         }
 
+
 		internal Variable CreateVariable(CodeElementsParser.Variable7Context context) {
 			if (context == null) return null;
-            Variable variable = null;
+            Variable variable;
 			if (context.identifier() != null) {
 				variable = new Variable(CreateIdentifier(context.identifier()));
 			} else
 			if (context.numericValue() != null) {
 				variable = new Variable(CobolWordsBuilder.CreateNumericValue(context.numericValue()));
 			} else
-			if (context.alphanumericValue2() != null) {
-				variable = new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+			if (context.alphanumericOrNationalLiteralToken() != null) {
+				variable = new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 			} else {
 				variable = new Variable(CobolWordsBuilder.CreateRepeatedCharacterValue(context.repeatedCharacterValue2()));
 			}
@@ -1416,10 +1396,10 @@ namespace TypeCobol.Compiler.Parser
 				variable = new Variable(
 					CobolWordsBuilder.CreateNumericValue(context.numericValue()));
 			}
-			else if (context.alphanumericValue2() != null)
+			else if (context.alphanumericOrNationalLiteralToken() != null)
 			{
 				variable = new Variable(
-					CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+					CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 			}
 			else
 			{
@@ -1449,10 +1429,10 @@ namespace TypeCobol.Compiler.Parser
                 variableOrExpression = new VariableOrExpression(
 					CobolWordsBuilder.CreateNumericValue(context.numericValue()));
 			}
-			else if (context.alphanumericValue2() != null)
+			else if (context.alphanumericOrNationalLiteralToken() != null)
 			{
                 variableOrExpression = new VariableOrExpression(
-					CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+					CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 			}
 			else if (context.repeatedCharacterValue1() != null)
 			{
@@ -1533,6 +1513,18 @@ namespace TypeCobol.Compiler.Parser
         }
 
 		[CanBeNull]
+		internal ReceivingStorageArea CreateStorageArea([CanBeNull] CodeElementsParser.IdentifierContext context) {
+			if (context == null) return null;
+			var identifier = CreateIdentifier(context);
+			if (identifier == null) return null;
+		    var receivingStorageArea = new ReceivingStorageArea(StorageDataType.Any, identifier);
+
+            // Collect storage area read/writes at the code element level
+            this.storageAreaWrites.Add(receivingStorageArea);
+
+            return receivingStorageArea;
+		}
+		[CanBeNull]
 		internal ReceivingStorageArea CreateStorageArea([CanBeNull] CodeElementsParser.StorageArea1Context context) {
 			if (context == null || context.identifier() == null) return null;
 			var identifier = CreateIdentifier(context.identifier());
@@ -1568,7 +1560,7 @@ namespace TypeCobol.Compiler.Parser
 			if (context.numericValue() != null) {
 				variable = new Variable(CobolWordsBuilder.CreateNumericValue(context.numericValue()));
 			} else {
-				variable = new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+				variable = new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 			}
 			// Collect storage area read/writes at the code element level
 			if (variable.StorageArea != null) {
@@ -1584,8 +1576,8 @@ namespace TypeCobol.Compiler.Parser
 			if (context.numericValue() != null) {
 				return new Variable(CobolWordsBuilder.CreateNumericValue(context.numericValue()));
 			} else
-			if (context.alphanumericValue2() != null) {
-				return new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+			if (context.alphanumericOrNationalLiteralToken() != null) {
+				return new Variable(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 			} else {
 				return new Variable(CobolWordsBuilder.CreateRepeatedCharacterValue(context.repeatedCharacterValue1()));
 			}
@@ -1598,8 +1590,8 @@ namespace TypeCobol.Compiler.Parser
 			if (context.numericValue() != null) {
 				return new VariableOrExpression(CobolWordsBuilder.CreateNumericValue(context.numericValue()));
 			} else
-			if (context.alphanumericValue2() != null) {
-				return new VariableOrExpression(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericValue2()));
+			if (context.alphanumericOrNationalLiteralToken() != null) {
+				return new VariableOrExpression(CobolWordsBuilder.CreateAlphanumericValue(context.alphanumericOrNationalLiteralToken()));
 			} else {
 				return new VariableOrExpression(CreateArithmeticExpression(context.arithmeticExpression()));
 			}

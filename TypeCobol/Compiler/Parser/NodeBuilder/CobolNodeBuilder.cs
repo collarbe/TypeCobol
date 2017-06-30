@@ -26,7 +26,7 @@ namespace TypeCobol.Compiler.Parser
         public SyntaxTree SyntaxTree { get; set; }
 
         // Programs can be nested => track current programs being analyzed
-        private Stack<Program> programsStack = null;
+        private Stack<Program> programsStack;
 
         private Program CurrentProgram
         {
@@ -103,7 +103,8 @@ namespace TypeCobol.Compiler.Parser
             }
         }
 
-        private void AddDiagnosticsAttachedInContext(IList<ParserDiagnostic> diagnostics, ParserRuleContext context)
+        private void AddDiagnosticsAttachedInContext(IList<ParserDiagnostic> diagnostics,
+            [NotNull] ParserRuleContext context)
         {
             var ruleNodeWithDiagnostics = (ParserRuleContextWithDiagnostics)context;
             if (ruleNodeWithDiagnostics.Diagnostics != null)
@@ -115,11 +116,11 @@ namespace TypeCobol.Compiler.Parser
             }
             if (context.children != null)
             {
-                foreach (var childNode in context.children)
-                {
-                    if (childNode is IRuleNode)
+                foreach (var childNode in context.children) {
+                    var node = childNode as IRuleNode;
+                    if (node != null)
                     {
-                        AddDiagnosticsAttachedInContext(diagnostics, (ParserRuleContext)((IRuleNode)childNode).RuleContext);
+                        AddDiagnosticsAttachedInContext(diagnostics, (ParserRuleContext)node.RuleContext);
                     }
                 }
             }
@@ -435,7 +436,7 @@ namespace TypeCobol.Compiler.Parser
             AddToSymbolTable(node);
         }
 
-        private void EnterDataConditionEntry(DataConditionEntry data)
+        private void EnterDataConditionEntry([NotNull] DataConditionEntry data)
         {
             SetCurrentNodeToTopLevelItem(data.LevelNumber);
             var node = new DataCondition(data);
@@ -443,7 +444,7 @@ namespace TypeCobol.Compiler.Parser
             if (!node.IsPartOfATypeDef) node.SymbolTable.AddVariable(node);
         }
 
-        private void EnterDataRedefinesEntry(DataRedefinesEntry data)
+        private void EnterDataRedefinesEntry([NotNull] DataRedefinesEntry data)
         {
             SetCurrentNodeToTopLevelItem(data.LevelNumber);
             var node = new DataRedefines(data);
@@ -451,7 +452,7 @@ namespace TypeCobol.Compiler.Parser
             if (!node.IsPartOfATypeDef) node.SymbolTable.AddVariable(node);
         }
 
-        private void EnterDataRenamesEntry(DataRenamesEntry data)
+        private void EnterDataRenamesEntry([NotNull] DataRenamesEntry data)
         {
             SetCurrentNodeToTopLevelItem(data.LevelNumber);
             var node = new DataRenames(data);
@@ -736,7 +737,7 @@ namespace TypeCobol.Compiler.Parser
             else if (context.GetText().Length < 1) skipEmptyStatement = true;
             else throw new NotImplementedException("Implementation error: \"" + context.GetText() + "\"[" + context.GetType().Name + ']');
         }
-        private bool skipEmptyStatement = false;
+        private bool skipEmptyStatement;
         public override void ExitStatement(ProgramClassParser.StatementContext context)
         {
             if (skipEmptyStatement) skipEmptyStatement = false;

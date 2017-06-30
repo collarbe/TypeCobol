@@ -87,10 +87,11 @@ namespace TypeCobol.Compiler.Parser
             }
 		}
 
-        private void AddTokensConsumedAndDiagnosticsAttachedInContext(IList<Token> consumedTokens, IList<Diagnostic> diagnostics, ParserRuleContext context)
+        private void AddTokensConsumedAndDiagnosticsAttachedInContext(IList<Token> consumedTokens, IList<Diagnostic> diagnostics,
+            [JetBrains.Annotations.NotNull] ParserRuleContext context)
         {
             var ruleNodeWithDiagnostics = (ParserRuleContextWithDiagnostics)context;
-            if (ruleNodeWithDiagnostics != null && ruleNodeWithDiagnostics.Diagnostics != null)
+            if (ruleNodeWithDiagnostics.Diagnostics != null)
             {
                 foreach (var ruleDiagnostic in ruleNodeWithDiagnostics.Diagnostics)
                 {
@@ -99,16 +100,18 @@ namespace TypeCobol.Compiler.Parser
             }
             if (context.children != null)
             {
-                foreach(var childNode in context.children)
-                {
-                    if(childNode is IRuleNode)
+                foreach(var childNode in context.children) {
+                    var node = childNode as IRuleNode;
+                    if(node != null)
                     {                        
-                        AddTokensConsumedAndDiagnosticsAttachedInContext(consumedTokens, diagnostics, (ParserRuleContext)((IRuleNode)childNode).RuleContext);
+                        AddTokensConsumedAndDiagnosticsAttachedInContext(consumedTokens, diagnostics, (ParserRuleContext)node.RuleContext);
                     }
-                    else if(childNode is ITerminalNode)
-                    {
-                        Token token = (Token)((ITerminalNode)childNode).Symbol;
-                        consumedTokens.Add(token);
+                    else {
+                        var terminalNode = childNode as ITerminalNode;
+                        if(terminalNode != null)
+                        {
+                            consumedTokens.Add((Token)terminalNode.Symbol);
+                        }
                     }
                 }
             }
@@ -226,29 +229,29 @@ namespace TypeCobol.Compiler.Parser
 		internal AuthoringProperties CreateAuthoringProperties(CodeElementsParser.AuthoringPropertiesContext context) {
 			var authoringProperties = new AuthoringProperties();
 			if (context.authorParagraph().Length > 0) {
-				var alphanumericValueContexts = context.authorParagraph().SelectMany(p => p.alphanumericValue6()).ToArray();
+				var alphanumericValueContexts = context.authorParagraph().SelectMany(p => p.CommentEntry()).ToArray();
 				authoringProperties.Author = CreateAlphanumericValues(alphanumericValueContexts);
 			}
 			if (context.dateCompiledParagraph().Length > 0) {
-				var alphanumericValueContexts = context.dateCompiledParagraph().SelectMany(p => p.alphanumericValue6()).ToArray();
+				var alphanumericValueContexts = context.dateCompiledParagraph().SelectMany(p => p.CommentEntry()).ToArray();
 				authoringProperties.DateCompiled = CreateAlphanumericValues(alphanumericValueContexts);
 			}
 			if (context.dateWrittenParagraph().Length > 0) {
-				var alphanumericValueContexts = context.dateWrittenParagraph().SelectMany(p => p.alphanumericValue6()).ToArray();
+				var alphanumericValueContexts = context.dateWrittenParagraph().SelectMany(p => p.CommentEntry()).ToArray();
 				authoringProperties.DateWritten = CreateAlphanumericValues(alphanumericValueContexts);
 			}
 			if (context.installationParagraph().Length > 0) {
-				var alphanumericValueContexts = context.installationParagraph().SelectMany(p => p.alphanumericValue6()).ToArray();
+				var alphanumericValueContexts = context.installationParagraph().SelectMany(p => p.CommentEntry()).ToArray();
 				authoringProperties.Installation = CreateAlphanumericValues(alphanumericValueContexts);
 			}
 			if (context.securityParagraph().Length > 0) {
-				var alphanumericValueContexts = context.securityParagraph().SelectMany(p => p.alphanumericValue6()).ToArray();
+				var alphanumericValueContexts = context.securityParagraph().SelectMany(p => p.CommentEntry()).ToArray();
 				authoringProperties.Security = CreateAlphanumericValues(alphanumericValueContexts);
 			}
 			return authoringProperties;
 		}
 
-		private AlphanumericValue[] CreateAlphanumericValues(CodeElementsParser.AlphanumericValue6Context[] contexts) {
+		private AlphanumericValue[] CreateAlphanumericValues([JetBrains.Annotations.NotNull] ITerminalNode[] contexts) {
 			AlphanumericValue[] alphanumericValues = new AlphanumericValue[contexts.Length];
 			for (int i = 0; i < contexts.Length; i++) {
 				alphanumericValues[i] = CobolWordsBuilder.CreateAlphanumericValue(contexts[i]);
@@ -1024,7 +1027,7 @@ namespace TypeCobol.Compiler.Parser
             //Variable declared with a TYPEDEF
             if (context.cobol2002TypedefClause() != null) {
 				var typedef = new DataTypeDescriptionEntry();
-                typedef.DataTypeName = CobolWordsBuilder.CreateDataTypeNameDefinition(context.dataNameDefinition());
+                typedef.DataTypeName = CobolWordsBuilder.CreateDataTypeNameDefinition(context.dataNameDef as Token);
                 var strong = context.cobol2002TypedefClause().STRONG();
                 var strict = context.cobol2002TypedefClause().STRICT();
            
@@ -1045,7 +1048,7 @@ namespace TypeCobol.Compiler.Parser
 // [/COBOL 2002]
             else {               
                 entry = new DataDescriptionEntry();
-                entry.DataName = CobolWordsBuilder.CreateDataNameDefinition(context.dataNameDefinition());
+                entry.DataName = CobolWordsBuilder.CreateDataNameDefinition(context.dataNameDef as Token);
                 entry.DataType = DataType.Unknown;
             }
             
@@ -1093,7 +1096,7 @@ namespace TypeCobol.Compiler.Parser
 		private void EnterDataRedefinesEntry(CodeElementsParser.DataDescriptionEntryContext context)
 		{
 			var entry = new DataRedefinesEntry();
-			entry.DataName = CobolWordsBuilder.CreateDataNameDefinition(context.dataNameDefinition());
+			entry.DataName = CobolWordsBuilder.CreateDataNameDefinition(context.dataNameDef as Token);
 			
 			if (context.redefinesClause() != null) {
 				entry.RedefinesDataName = CobolWordsBuilder.CreateDataNameReference(context.redefinesClause().dataNameReference());
@@ -1114,7 +1117,7 @@ namespace TypeCobol.Compiler.Parser
             if (context.pictureClause() != null && context.pictureClause().Length > 0)
             {
                 var pictureClauseContext = context.pictureClause()[0];
-                entry.Picture = CobolWordsBuilder.CreateAlphanumericValue(pictureClauseContext.pictureCharacterString);
+                entry.Picture = CobolWordsBuilder.CreateAlphanumericValue(pictureClauseContext.pictureCharacterString as Token);
             }
 
 // [COBOL 2002]
@@ -1298,6 +1301,7 @@ namespace TypeCobol.Compiler.Parser
 
         public override void EnterDataRenamesEntry(CodeElementsParser.DataRenamesEntryContext context) {
 			var entry = new DataRenamesEntry();
+
 			entry.LevelNumber = CobolWordsBuilder.CreateIntegerValue(context.levelNumber);
 			entry.DataName = CobolWordsBuilder.CreateDataNameDefinition(context.dataNameDefinition());
 			if (context.renamesClause().qualifiedDataName() != null) {
@@ -1697,7 +1701,7 @@ namespace TypeCobol.Compiler.Parser
 
         public override void EnterEvaluateStatement(CodeElementsParser.EvaluateStatementContext context) {
 			Context = context;
-			CodeElement = CobolStatementsBuilder.CreateEvaluateStatement(context); ;
+			CodeElement = CobolStatementsBuilder.CreateEvaluateStatement(context);
 		}
 
 		public override void EnterEvaluateStatementEnd(CodeElementsParser.EvaluateStatementEndContext context) {

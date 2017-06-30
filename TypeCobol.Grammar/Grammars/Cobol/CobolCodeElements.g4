@@ -100,6 +100,9 @@ codeElement:
 
 	// -- Procedure division Statements --
 
+	// --- Data manipulation statements ---
+	moveStatement |
+
 	// --- Decision statements ---
 	evaluateStatement |
 		whenSearchCondition |
@@ -151,7 +154,6 @@ codeElement:
 	// --- Data manipulation statements ---
 	initializeStatement |
 	inspectStatement |
-	moveStatement |
 	setStatement |
 	stringStatement |
 	stringStatementEnd |
@@ -505,19 +507,19 @@ authoringProperties:
 	 securityParagraph     )*;
 
 authorParagraph:
-    AUTHOR PeriodSeparator? alphanumericValue6*;
+    AUTHOR PeriodSeparator? CommentEntry*;
 
 installationParagraph:
-    INSTALLATION PeriodSeparator? alphanumericValue6*;
+    INSTALLATION PeriodSeparator? CommentEntry*;
 
 dateWrittenParagraph:
-    DATE_WRITTEN PeriodSeparator? alphanumericValue6*;
+    DATE_WRITTEN PeriodSeparator? CommentEntry*;
 
 dateCompiledParagraph:
-    DATE_COMPILED PeriodSeparator? alphanumericValue6*;
+    DATE_COMPILED PeriodSeparator? CommentEntry*;
 
 securityParagraph:
-     SECURITY PeriodSeparator? alphanumericValue6*;
+     SECURITY PeriodSeparator? CommentEntry*;
 
 // p105 : The comment-entry in any of the optional paragraphs can be any combination of
 // characters from the character set of the computer. The comment-entry is written in
@@ -2143,7 +2145,7 @@ dataDescriptionEntry:
 	  // dataDescriptionEntry, dataRenamesEntry and dataConditionEntry
 	( { CurrentToken.Text != "66" && CurrentToken.Text != "88" }? 	
 
-	levelNumber=integerValue2 (dataNameDefinition | FILLER)? redefinesClause?
+	levelNumber=LevelNumber (dataNameDefinition | FILLER)? redefinesClause?
 	( pictureClause
 	| blankWhenZeroClause
 	| externalClause
@@ -2170,7 +2172,7 @@ dataDescriptionEntry:
 // data description entry in that record.
 
 dataRenamesEntry: { CurrentToken.Text == "66" }? 
-	levelNumber=integerValue2 dataNameDefinition renamesClause PeriodSeparator;
+	levelNumber=LevelNumber dataNameDefinition renamesClause PeriodSeparator;
 
 // p186: Format 3: condition-name
 // Format 3 describes condition-names.
@@ -2183,7 +2185,7 @@ dataRenamesEntry: { CurrentToken.Text == "66" }?
 // alphanumeric group items.
 
 dataConditionEntry: { CurrentToken.Text == "88" }? 
-	levelNumber=integerValue2 conditionNameDefinition valueClauseForCondition PeriodSeparator;
+	levelNumber=LevelNumber conditionNameDefinition valueClauseForCondition PeriodSeparator;
 
 // p186: The level-number specifies the hierarchy of data within a record, and identifies
 // special-purpose data entries. A level-number begins a data description entry, a
@@ -2687,7 +2689,7 @@ groupUsageClause:
 
 occursClause:
 	OCCURS (minNumberOfOccurences=integerValue TO)? (maxNumberOfOccurences=integerValue | UNBOUNDED) TIMES?
-	(DEPENDING ON? varNumberOfOccurences=numericVariable2)?
+	(DEPENDING ON? varNumberOfOccurences=dataNameReference)?
 	tableSortingKeys*
 	(INDEXED BY? indexNameDefinition+)?;
 
@@ -2713,7 +2715,7 @@ tableSortingKeys:
 // elementary data item.
 
 pictureClause:
-    (PICTURE |PIC) IS? pictureCharacterString=alphanumericValue7;
+    (PICTURE |PIC) IS? pictureCharacterString=PictureCharacterString;
 
 // p199: character-string can contain a maximum of 50 characters.
 // Symbols used in the PICTURE clause
@@ -4443,7 +4445,7 @@ gotoSimple:
 	GO TO? procedureName;
 
 gotoConditional:
-	GO TO? procedureName+ DEPENDING ON? variable1;
+	GO TO? procedureName+ DEPENDING ON? identifier;
 
 // p341: IF statement
 // The IF statement evaluates a condition and provides for alternative actions in the
@@ -5838,7 +5840,7 @@ readStatementEnd: END_READ;
 // those records placed in it by execution of RELEASE statements.
 
 releaseStatement:
-	RELEASE recordName (FROM variable1)?;
+	RELEASE recordName (FROM identifier)?;
 
 // record-name-1
 // Must specify the name of a logical record in a sort-merge file description
@@ -5961,7 +5963,7 @@ returnStatementEnd: END_RETURN;
 // ... more details p406->407 Reusing a logical record, Sequential / Indexed / Relative files ...
 
 rewriteStatement:
-	REWRITE recordName (FROM sendingField=variable1)?;
+	REWRITE recordName (FROM sendingField=identifier)?;
 
 rewriteStatementEnd: END_REWRITE;
 
@@ -6006,8 +6008,8 @@ rewriteStatementEnd: END_REWRITE;
 
 searchStatement: serialSearch | binarySearch;
 
-serialSearch: SEARCH variable1 (VARYING dataOrIndexStorageArea)?;
-binarySearch: SEARCH ALL variable1;
+serialSearch: SEARCH identifier (VARYING dataOrIndexStorageArea)?;
+binarySearch: SEARCH ALL identifier;
 
 whenSearchCondition: WHEN conditionalExpression;
 
@@ -6025,7 +6027,7 @@ whenSearchCondition: WHEN conditionalExpression;
 //     WHEN binarySearchCondition (AND searchCondition)*
 //
 // binarySearchCondition:
-//     (variable2 IS? ((EQUAL TO?) | EqualOperator) variableOrExpression2) | 
+//     (qualifiedDataName IS? ((EQUAL TO?) | EqualOperator) variableOrExpression2) | 
 //     conditionNameConditionOrSwitchStatusCondition;
 
 searchStatementEnd: END_SEARCH;
@@ -6608,7 +6610,7 @@ sortStatement:
 // the specified comparison.
 
 startStatement:
-	START fileNameReference (KEY IS? relationalOperator variable1)?;
+	START fileNameReference (KEY IS? relationalOperator identifier)?;
 
 startStatementEnd: END_START;
 
@@ -7011,7 +7013,7 @@ subtractStatementEnd: END_SUBTRACT;
 // ... more details p447->448 Example of the UNSTRING statement ...
 
 unstringStatement:
-	UNSTRING sendingField=variable1
+	UNSTRING sendingField=identifier
 	(DELIMITED BY? unstringDelimiter (OR unstringDelimiter)*)? 
 	INTO unstringReceivingFields+ 
 	(WITH? POINTER relativeCharacterPositionDuringProcessing=storageArea1)? 
@@ -7214,7 +7216,7 @@ unstringStatementEnd: END_UNSTRING;
 // ... more details p456 WRITE for relative files ...
 
 writeStatement:
-	WRITE recordName (FROM sendingField=variable1)?
+	WRITE recordName (FROM sendingField=identifier)?
 	((BEFORE | AFTER) ADVANCING? (
 		(numberOfLines=integerVariable1 (LINE | LINES)?)  | 
 		 mnemonicForEnvironmentNameReference              | 
@@ -7557,7 +7559,7 @@ writeStatementEnd: END_WRITE;
 
 xmlGenerateStatement:
 	XML GENERATE receivingField=storageArea1 
-	FROM dataItemToConvertToXml=variable1
+	FROM dataItemToConvertToXml=identifier
 	(COUNT IN? generatedXmlCharsCount=storageArea1)?
 	(WITH? ENCODING codepage)?
 	(WITH? XML_DECLARATION)?
@@ -7569,13 +7571,13 @@ xmlGenerateStatement:
 	(SUPPRESS xmlSuppressDirective+)?;
 		
 xmlNameMapping:
-	subordinateDataItem=variable1 IS? xmlNameToGenerate=alphanumericValue2;
+	subordinateDataItem=identifier IS? xmlNameToGenerate=alphanumericOrNationalLiteralToken;
 
 xmlTypeMapping:
-	subordinateDataItem=variable1 IS? (ATTRIBUTE | ELEMENT | CONTENT);
+	subordinateDataItem=identifier IS? (ATTRIBUTE | ELEMENT | CONTENT);
 
 xmlSuppressDirective:	
-	( subordinateDataItem=variable1 |
+	( subordinateDataItem=identifier |
 	(EVERY (ATTRIBUTE | ELEMENT | ((NUMERIC | NONNUMERIC) (ATTRIBUTE | ELEMENT)?)))?)
 	// Only figurative constants are allowed: ZERO | ZEROES | ZEROS | SPACE | SPACES | LOW_VALUE | LOW_VALUES | HIGH_VALUE | HIGH_VALUES
 	WHEN repeatedCharacterValue3 (OR? repeatedCharacterValue3)*;
@@ -7785,10 +7787,10 @@ codepage: integerVariable1;
 // ... more information p473->474 Control flow ...
 
 xmlParseStatement:
-                     XML PARSE xmlTextToParse=variable1
+                     XML PARSE xmlTextToParse=identifier
                      (WITH? ENCODING codepage)? 
                      (RETURNING NATIONAL)?
-                     (VALIDATING WITH? (optimizedXmlSchemaData=variable1 | (FILE optimizedXmlSchemaFile=xmlSchemaNameReference)))?
+                     (VALIDATING WITH? (optimizedXmlSchemaData=identifier | (FILE optimizedXmlSchemaFile=xmlSchemaNameReference)))?
                      PROCESSING PROCEDURE IS? (procedureName | proceduresRange);
 
 
@@ -8164,7 +8166,7 @@ notOnSizeErrorCondition:
 
 execStatement:
                  (EXEC | EXECUTE) execTranslatorName 
-                 alphanumericValue8* 
+                 ExecStatementText* 
                  execStatementEnd;
 
 execStatementEnd: END_EXEC;

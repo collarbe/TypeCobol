@@ -749,31 +749,17 @@ characterValue4: alphanumericOrNationalLiteralToken | figurativeConstant;
 
 alphanumericValue1: alphanumericLiteralToken;
 
-alphanumericValue2: alphanumericOrNationalLiteralToken;
-
 alphanumericValue3: alphanumericOrNationalLiteralToken | figurativeConstant;
 
 alphanumericValue4: UserDefinedWord;
 
 alphanumericValue5: UserDefinedWord | alphanumericLiteralToken;
 
-alphanumericValue6: CommentEntry;
-
-alphanumericValue7: PictureCharacterString;
-
-alphanumericValue8: ExecStatementText;
-
-alphanumericValue9: specialRegister;
-
-alphanumericValue10: standardCollatingSequence;
-
 alphanumericValue11: SymbolicCharacter;
 
 alphanumericValue12: SectionParagraphName;
 
 enumeratedValue1: UserDefinedWord;
-
-enumeratedValue2: IntrinsicFunctionName;
 
 enumeratedValue3: ExecTranslatorName;
 
@@ -793,9 +779,9 @@ nullPointerValue: nullFigurativeConstant;
 
 // Any type of value
 
-value1: numericValue | alphanumericValue2 | repeatedCharacterValue2;
+value1: numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue2;
 
-value2: numericValue | alphanumericValue2 | repeatedCharacterValue2 | nullPointerValue;
+value2: numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue2 | nullPointerValue;
 
 
 // --- Cobol symbol definitions and symbol references ---
@@ -805,10 +791,6 @@ value2: numericValue | alphanumericValue2 | repeatedCharacterValue2 | nullPointe
 
 symbolDefinition1: alphanumericValue1;
 
-symbolDefinition2: alphanumericValue2;
-
-symbolDefinition4: alphanumericValue4;
-
 symbolDefinition5: alphanumericValue5;
 
 symbolDefinition11: alphanumericValue11;
@@ -817,15 +799,7 @@ symbolDefinition12: alphanumericValue12;
 
 symbolReference1: alphanumericValue1;
 
-symbolReference2: alphanumericValue2;
-
-symbolReference4: alphanumericValue4;
-
 symbolReference5: alphanumericValue5;
-
-symbolReference9: alphanumericValue9; // specialRegister
-
-symbolReference10: alphanumericValue10; // standardCollatingSequence
 
 symbolReference11: alphanumericValue11;
 
@@ -834,21 +808,15 @@ symbolReference12: alphanumericValue4 | DATE;
 
 ambiguousSymbolReference1: alphanumericValue1;
 
-ambiguousSymbolReference4: alphanumericValue4;
-
 symbolDefinitionOrReference1: alphanumericValue1;
 
 symbolDefinitionOrReference4: alphanumericValue4;
 
 externalName1: enumeratedValue1;
 
-externalName2: enumeratedValue2;
-
 externalName3: enumeratedValue3;
 
 externalName5: alphanumericValue5;
-
-externalNameOrSymbolReference4: alphanumericValue4;
 
 externalNameOrSymbolReference5: alphanumericValue5;
 
@@ -927,11 +895,11 @@ externalNameOrSymbolReference5: alphanumericValue5;
 
 programNameDefinition: symbolDefinition5;
 
-programNameReference1: symbolReference1;
+programNameReference1: alphanumericLiteralToken;
 
 programNameReference2: symbolReference5;
 
-programNameReference3: symbolReference4;
+programNameReference3: UserDefinedWord;
 
 // p330: ENTRY statement
 // literal-1 
@@ -951,7 +919,7 @@ programNameReferenceOrProgramEntryReference: ambiguousSymbolReference1;
 
 sectionNameDefinition: symbolDefinition12;
 
-sectionNameReference: symbolReference4;
+sectionNameReference: UserDefinedWord;
 
 // p253: Paragraph-name
 // A user-defined word that identifies a paragraph. A
@@ -961,10 +929,10 @@ sectionNameReference: symbolReference4;
 
 paragraphNameDefinition: symbolDefinition12;
 
-paragraphNameReference: symbolReference4;
+paragraphNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-paragraphNameReferenceOrSectionNameReference: ambiguousSymbolReference4;
+paragraphNameReferenceOrSectionNameReference: UserDefinedWord;
 
 // p103 : class-name
 // A user-defined word that identifies the class. class-name can optionally
@@ -977,9 +945,9 @@ paragraphNameReferenceOrSectionNameReference: ambiguousSymbolReference4;
 // that is part of a Java package or for using non-COBOL naming conventions for
 // class-names.
 
-classNameDefinition: symbolDefinition4;
+classNameDefinition: UserDefinedWord;
 
-classNameReference: symbolReference4;
+classNameReference: UserDefinedWord;
 
 // p122: external-class-name-1
 // An alphanumeric literal containing a name that enables a COBOL program
@@ -1002,15 +970,15 @@ externalClassNameDefOrRef: symbolDefinitionOrReference1;
 // method name. Method names are used directly, without translation. The
 // method name is processed in a case-sensitive manner.
 
-methodNameDefinition: symbolDefinition2;
+methodNameDefinition: alphanumericOrNationalLiteralToken;
 
-methodNameReference: symbolReference2;
+methodNameReference: alphanumericOrNationalLiteralToken;
 
 // [TYPECOBOL] extension : user defined functions
 
-functionNameDefinition: symbolDefinition4;
+functionNameDefinition: UserDefinedWord;
 
-functionNameReference: symbolReference4;
+functionNameReference: UserDefinedWord;
 
 // ** Environment vars **
 
@@ -1026,12 +994,12 @@ functionNameReference: symbolReference4;
 // mnemonic-name-1 can be used in ACCEPT, DISPLAY, and WRITE statements. 
 // mnemonic-name-2 can be referenced only in the SET statement. 
 
-mnemonicForEnvironmentNameDefinition: symbolDefinition4;
+mnemonicForEnvironmentNameDefinition: UserDefinedWord;
 
-mnemonicForEnvironmentNameReference: symbolReference4;
+mnemonicForEnvironmentNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-mnemonicForEnvironmentNameReferenceOrEnvironmentName: externalNameOrSymbolReference4;
+mnemonicForEnvironmentNameReferenceOrEnvironmentName: UserDefinedWord;
 
 // p115 : mnemonic-name-1 , mnemonic-name-2
 // mnemonic-name-1 and mnemonic-name-2 follow the rules of formation for
@@ -1039,15 +1007,15 @@ mnemonicForEnvironmentNameReferenceOrEnvironmentName: externalNameOrSymbolRefere
 
 // mnemonic-name-2 can qualify condition-1 or condition-2 names.
 
-mnemonicForUPSISwitchNameDefinition: symbolDefinition4;
+mnemonicForUPSISwitchNameDefinition: UserDefinedWord;
 
-mnemonicForUPSISwitchNameReference: symbolReference4;
+mnemonicForUPSISwitchNameReference: UserDefinedWord;
 
 // p115 : upsiSwitchName
 // A 1-byte user-programmable status indicator (UPSI) switch.
 // - condition on UPSI switch status
 
-conditionForUPSISwitchNameDefinition: symbolDefinition4;
+conditionForUPSISwitchNameDefinition: UserDefinedWord;
 
 // ** Character sets **
 
@@ -1075,7 +1043,7 @@ conditionForUPSISwitchNameDefinition: symbolDefinition4;
 
 symbolicCharacterDefinition: symbolDefinition11;
 
-symbolicCharacterReference: symbolReference10;
+symbolicCharacterReference: standardCollatingSequence;
 
 // p 115 : ALPHABET alphabet-name-1 IS
 // alphabet-name-1 specifies a collating sequence when used in:
@@ -1086,13 +1054,13 @@ symbolicCharacterReference: symbolReference10;
 // - The FD entry CODE-SET clause
 // - The SYMBOLIC CHARACTERS clause
 
-alphabetNameDefinition: symbolDefinition4;
+alphabetNameDefinition: UserDefinedWord;
 
-alphabetNameReference: symbolReference4;
+alphabetNameReference: UserDefinedWord;
 
-intrinsicAlphabetNameReference: /* standardCollatingSequence */ symbolReference10;
+intrinsicAlphabetNameReference: standardCollatingSequence;
 
-alphabetName: alphabetNameReference | /* standardCollatingSequence */ intrinsicAlphabetNameReference;
+alphabetName: alphabetNameReference | intrinsicAlphabetNameReference;
 
 // p118 : CLASS class-name-1 IS
 // Provides a means for relating a name to the specified set of characters
@@ -1101,15 +1069,15 @@ alphabetName: alphabetNameReference | /* standardCollatingSequence */ intrinsicA
 // clause define the exclusive set of characters of which this class consists.
 // The class-name in the CLASS clause can be a DBCS user-defined word.
 
-characterClassNameDefinition: symbolDefinition4;
+characterClassNameDefinition: UserDefinedWord;
 
-characterClassNameReference: symbolReference4;
+characterClassNameReference: UserDefinedWord;
 
 // ** Data **
 
 // [TYPECOBOL] extension : user defined data types
 
-dataTypeNameDefinition: symbolDefinition4; // Not used in the grammar - merged with dataNameDefinition
+dataTypeNameDefinition: UserDefinedWord; // Not used in the grammar - merged with dataNameDefinition
 
 dataTypeNameReference: symbolReference12;
 
@@ -1123,32 +1091,30 @@ dataTypeNameReference: symbolReference12;
 // and for record description entries associated with file description entries
 // that have the GLOBAL or EXTERNAL clauses.
 
-dataNameDefinition: symbolDefinition4;
+dataNameDefinition: UserDefinedWord;
 
-dataNameReference: symbolReference4;
-
-intrinsicDataNameReference: /* specialRegister */ symbolReference9;
+dataNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-dataNameReferenceOrFileNameReference: ambiguousSymbolReference4;
+dataNameReferenceOrFileNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-dataNameReferenceOrIndexNameReference: ambiguousSymbolReference4;
+dataNameReferenceOrIndexNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-dataNameReferenceOrFileNameReferenceOrMnemonicForUPSISwitchNameReference: ambiguousSymbolReference4;
+dataNameReferenceOrFileNameReferenceOrMnemonicForUPSISwitchNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReference: ambiguousSymbolReference4;
+dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReferenceOrIndexNameReference: ambiguousSymbolReference4;
+dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReferenceOrIndexNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReferenceOrFileNameReference: ambiguousSymbolReference4;
+dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReferenceOrFileNameReference: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReferenceOrClassNameReference: ambiguousSymbolReference4;
+dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReferenceOrClassNameReference: UserDefinedWord;
 
 // p115 : condition-1, condition-2
 // Condition-names follow the rules for user-defined names. At least one
@@ -1162,10 +1128,10 @@ dataNameReferenceOrConditionNameReferenceOrConditionForUPSISwitchNameReferenceOr
 // Condition-names specified in the SPECIAL-NAMES paragraph of a
 // containing program can be referenced in any contained program
 
-conditionNameDefinition: symbolDefinition4;
+conditionNameDefinition: UserDefinedWord;
 
 // [Type ambiguity] at this parsing stage
-conditionNameReferenceOrConditionForUPSISwitchNameReference: ambiguousSymbolReference4;
+conditionNameReferenceOrConditionForUPSISwitchNameReference: UserDefinedWord;
 
 // p194: index-name-1
 // Each index-name specifies an index to be created by the compiler for use
@@ -1194,9 +1160,9 @@ conditionNameReferenceOrConditionForUPSISwitchNameReference: ambiguousSymbolRefe
 // An index-name is not the same as the name of an index data item, and an
 // index-name cannot be used like a data-name.
 
-indexNameDefinition: symbolDefinition4;
+indexNameDefinition: UserDefinedWord;
 
-indexNameReference: symbolReference4;
+indexNameReference: UserDefinedWord;
 
 // ** Files **
 
@@ -1204,18 +1170,18 @@ indexNameReference: symbolReference4;
 // Must be identified by an FD or SD entry in the DATA DIVISION.
 // A file-name must conform to the rules for a COBOL user-defined name, must contain at least one alphabetic character, and must be unique within this program.
 
-fileNameDefinition: symbolDefinition4;
+fileNameDefinition: UserDefinedWord;
 
-fileNameReference: symbolReference4;
+fileNameReference: UserDefinedWord;
 
 // p120: XML-SCHEMA xml-schema-name-1 IS
 // xml-schema-name-1 can be referenced only in an XML PARSE statement.
 // The xml-schema-name in the XML SCHEMA clause can be a DBCS
 // user-defined word.
 
-xmlSchemaNameDefinition: symbolDefinition4;
+xmlSchemaNameDefinition: UserDefinedWord;
 
-xmlSchemaNameReference: symbolReference4;
+xmlSchemaNameReference: UserDefinedWord;
 
 
 // --- Qualified names : give explicit context to resolve ambiguous name references ---
@@ -1504,7 +1470,7 @@ assignmentNameOrFileNameReference : externalNameOrSymbolReference5;
 //	WHEN_COMPILED |
 //	YEAR_TO_YYYY;
 
-intrinsicFunctionName: externalName2;
+//See IntrinsicFunctionName;
 
 // IBM Enterprise Cobol 5.1 for zOS - Programming Guide.pdf
 // p423: To communicate with DB2, do these steps:

@@ -15,7 +15,8 @@ namespace TypeCobol.Compiler.AntlrUtils
 
         public static ITerminalNode GetFirstTerminalNode(IParseTree node)
         {
-            while (!(node is ITerminalNode))
+            ITerminalNode currNode = node as ITerminalNode;
+            while (currNode == null)
             {
                 if (node.ChildCount == 0)
                 {
@@ -24,9 +25,10 @@ namespace TypeCobol.Compiler.AntlrUtils
                 else
                 {
                     node = node.GetChild(0);
+                    currNode = node as ITerminalNode;
                 }
             }
-            return (ITerminalNode)node;
+            return currNode;
         }
 
         public static Token GetTokenFromTerminalNode(ITerminalNode terminalNode)
@@ -62,18 +64,21 @@ namespace TypeCobol.Compiler.AntlrUtils
         public static IList<Token> GetTokensList(IParseTree node)
         {
             IList<Token> tokens = new List<Token>();
-            if(node is ITerminalNode)
+
+            var terminalNode = node as ITerminalNode;
+            if(terminalNode != null)
             {
-                tokens.Add(GetTokenFromTerminalNode((ITerminalNode)node));
+                tokens.Add(GetTokenFromTerminalNode(terminalNode));
             }
             else
             {
                 for(int i=0; i<node.ChildCount; i++)
                 {
                     var childNode = node.GetChild(i);
-                    if(childNode is ITerminalNode)
+                    var node1 = childNode as ITerminalNode;
+                    if(node1 != null)
                     {
-                        tokens.Add(GetTokenFromTerminalNode((ITerminalNode)childNode));
+                        tokens.Add(GetTokenFromTerminalNode(node1));
                     }
                 }
             }

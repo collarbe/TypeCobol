@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using TypeCobol.Compiler.Diagnostics;
 
 namespace TypeCobol.Compiler.Parser
@@ -83,7 +84,7 @@ namespace TypeCobol.Compiler.Parser
         }
 
         private IList<ParameterDescriptionEntry> CreateParameters(
-            CodeElementsParser.ParameterDescriptionContext[] contexts)
+            [NotNull] CodeElementsParser.ParameterDescriptionContext[] contexts)
         {
             var parameters = new List<ParameterDescriptionEntry>();
             foreach (var context in contexts)
@@ -112,7 +113,7 @@ namespace TypeCobol.Compiler.Parser
             return parameters;
         }
 
-        private ParameterDescriptionEntry CreateFunctionDataParameter(DataConditionEntry condition)
+        private ParameterDescriptionEntry CreateFunctionDataParameter([NotNull] DataConditionEntry condition)
         {
             var data = new ParameterDescriptionEntry();
             data.LevelNumber = condition.LevelNumber;
@@ -130,7 +131,7 @@ namespace TypeCobol.Compiler.Parser
             if (context.pictureClause() != null)
             {
                 parameter.Picture =
-                    CobolWordsBuilder.CreateAlphanumericValue(context.pictureClause().pictureCharacterString);
+                    CobolWordsBuilder.CreateAlphanumericValue(context.pictureClause().pictureCharacterString as Token);
                 parameter.DataType = DataType.Create(parameter.Picture.Value);
             }
             else if (context.cobol2002TypeClause() != null)
@@ -164,7 +165,7 @@ namespace TypeCobol.Compiler.Parser
             if (context.justifiedClause() != null)
             {
                 var justifiedClauseContext = context.justifiedClause();
-                Token justifiedToken = null;
+                Token justifiedToken;
                 if (justifiedClauseContext.JUSTIFIED() != null)
                 {
                     justifiedToken = ParseTreeUtils.GetFirstToken(justifiedClauseContext.JUSTIFIED());
@@ -365,7 +366,7 @@ namespace TypeCobol.Compiler.Parser
             CodeElement = function;
         }
 
-        private static CallTargetParameter CreateCallTargetParameter(ParameterDescriptionEntry param)
+        private static CallTargetParameter CreateCallTargetParameter([NotNull] ParameterDescriptionEntry param)
         {
             var symbolReference = new SymbolReference(param.DataName);
             var storageArea = new DataOrConditionStorageArea(symbolReference);
@@ -395,7 +396,7 @@ namespace TypeCobol.Compiler.Parser
 
             // Register call parameters (shared storage areas) information at the CodeElement level
             CallSite callSite = null;
-            ProcedureStyleCallStatement statement = null;
+            ProcedureStyleCallStatement statement;
             Context = context;
 
             //Here ambiguousSymbolReference with either CandidatesType:

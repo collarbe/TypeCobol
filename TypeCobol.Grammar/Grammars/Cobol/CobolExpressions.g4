@@ -250,7 +250,7 @@ lengthOfSpecialRegister:
 // ... more detail on functions (types, usage rules, arguments ...) p478 to p484 ...
 
 functionIdentifier: 
-	FUNCTION intrinsicFunctionName (LeftParenthesisSeparator argument+ RightParenthesisSeparator)?;
+	FUNCTION IntrinsicFunctionName (LeftParenthesisSeparator argument+ RightParenthesisSeparator)?;
 
 // p478: argument-1 must be an identifier, a literal (other than a figurative constant),
 // or an arithmetic expression that satisfies the argument requirements for the
@@ -282,7 +282,7 @@ storageAreaReference:
 	| otherStorageAreaReference;
 
 otherStorageAreaReference: 
-	  intrinsicDataNameReference /* specialRegister */
+	  specialRegister
 	| autoAllocatedDataItemReference /* LINAGE-COUNTER, ADDRESS OF, LENGTH OF special registers */
 	| functionIdentifier;
 
@@ -338,6 +338,9 @@ storageAreaReferenceOrConditionReferenceOrClassName:
 
 identifier:	
 	storageAreaReferenceOrConditionReference (LeftParenthesisSeparator referenceModifier RightParenthesisSeparator)?;
+
+dataIdentifier:
+	storageAreaReference (LeftParenthesisSeparator referenceModifier RightParenthesisSeparator)?;
 
 // p74: Reference modification
 // Reference modification defines a data item by specifying a leftmost character and
@@ -984,10 +987,6 @@ integerVariableOrIndex1: identifierOrIndexName | integerValue;
 
 integerVariableOrIndex2: qualifiedDataNameOrIndexName | integerValue;
 
-numericVariable1: identifier;
-		
-numericVariable2: dataNameReference;
-
 numericVariable3: identifier | numericValue;
 
 numericVariableOrIndex: identifierOrIndexName | numericValue;
@@ -996,7 +995,7 @@ characterVariable: dataNameReference | characterValue4;
 
 alphanumericVariable1: identifier | alphanumericValue3;
 
-alphanumericVariable2: identifier | alphanumericValue2 | repeatedCharacterValue1;
+alphanumericVariable2: identifier | alphanumericOrNationalLiteralToken | repeatedCharacterValue1;
 
 programNameVariable: programNameReference1 | identifier;
 
@@ -1010,27 +1009,23 @@ methodNameVariable: methodNameReference | identifier;
 
 // Any type of data
 
-variable1: identifier;
-
-variable2: qualifiedDataName;
-
-// variable3: identifier | numericValue | alphanumericValue2; << only shared version
+// variable3: identifier | numericValue | alphanumericOrNationalLiteralToken; << only shared version
 
 variable4: identifier | numericValue | alphanumericValue3;
 
 variable5: dataNameReference | numericValue | alphanumericValue3;
 
-variable6: identifier | numericValue | alphanumericValue2 | repeatedCharacterValue1;
+variable6: identifier | numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue1;
 
-variable7: identifier | numericValue | alphanumericValue2 | repeatedCharacterValue2;
+variable7: identifier | numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue2;
 
-variableOrIndex: identifierOrIndexName | numericValue | alphanumericValue2 | repeatedCharacterValue2;
+variableOrIndex: identifierOrIndexName | numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue2;
 
-// variableOrFileName: identifierOrFileName | numericValue | alphanumericValue2 | repeatedCharacterValue1; << only shared version
+// variableOrFileName: identifierOrFileName | numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue1; << only shared version
 
-// variableOrExpression1: identifier | numericValue | alphanumericValue2 | arithmeticExpression; << only shared version
+// variableOrExpression1: identifier | numericValue | alphanumericOrNationalLiteralToken | arithmeticExpression; << only shared version
 
-variableOrExpression2: identifier | numericValue | alphanumericValue2 | repeatedCharacterValue1 | arithmeticExpression;
+variableOrExpression2: identifier | numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue1 | arithmeticExpression;
 
 
 // --- Receiving data items : storage areas where statements results are saved ---
@@ -1052,11 +1047,11 @@ storageArea2: dataNameReference;
 
 // --- Variables or storage areas shared between a caller and callee during a program, method, or function call ---
 
-sharedVariable3: identifier | numericValue | alphanumericValue2;
+sharedVariable3: identifier | numericValue | alphanumericOrNationalLiteralToken;
 
-sharedVariableOrFileName: identifierOrFileName | numericValue | alphanumericValue2 | repeatedCharacterValue1;
+sharedVariableOrFileName: identifierOrFileName | numericValue | alphanumericOrNationalLiteralToken | repeatedCharacterValue1;
 
-sharedVariableOrExpression1: identifier | numericValue | alphanumericValue2 | arithmeticExpression;
+sharedVariableOrExpression1: identifier | numericValue | alphanumericOrNationalLiteralToken | arithmeticExpression;
 
 sharedStorageArea1: identifier;
 
