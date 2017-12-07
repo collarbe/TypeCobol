@@ -1,5 +1,4 @@
-ger[![Build status](https://ci.appveyor.com/api/projects/status/hum7rioly7mib3so/branch/master?svg=true)](https://ci.appveyor.com/project/TypeCobolTeam/typecobol/branch/master)
-rtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsbrtrztrtrbvedfsb
+[![Build status](https://ci.appveyor.com/api/projects/status/hum7rioly7mib3so/branch/master?svg=true)](https://ci.appveyor.com/project/TypeCobolTeam/typecobol/branch/master)
 
 # TypeCobol
 TypeCobol is two things:
